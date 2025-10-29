@@ -37,7 +37,8 @@ func (c *Context) Print(path string, opts ...PrintOption) error {
 	for _, file := range c.syntax() {
 		base := filepath.Base(c.SchemaPackage.Fset.File(file.Pos()).Name())
 		var buf bytes.Buffer
-		if err := printer.Fprint(&buf, c.SchemaPackage.Fset, file); err != nil {
+		config := printer.Config{Mode: printer.UseSpaces | printer.TabIndent, Tabwidth: 8}
+		if err := config.Fprint(&buf, c.SchemaPackage.Fset, file); err != nil {
 			return err
 		}
 		fn := filepath.Join(path, base)
@@ -45,6 +46,9 @@ func (c *Context) Print(path string, opts ...PrintOption) error {
 		if err != nil {
 			return err
 		}
+		
+		process = prettyCompositeLiterals(process)
+
 		if options.headerComment != "" {
 			if s := string(process); s != "" && options.commentRegexp.FindString(s) == "" {
 				process = []byte(options.headerComment + "\n\n" + s)
